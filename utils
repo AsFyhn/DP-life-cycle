@@ -1,0 +1,11 @@
+def util(c,L,par):
+    """ Utility function"""
+    return ((c**(1.0-par.rho))/(1.0-par.rho)-par.alpha*(1-L))
+
+def marg_util(c,par):
+    """ Marginal utility function"""
+    return c**(-par.rho)
+
+def inv_marg_util(u,par):
+    """ Inverse of marginal utility function"""
+    return u**(-1/par.rho)
