@@ -17,16 +17,17 @@ def EGM_loop (sol,t,par):
             xhat_next_w = par.R * xhat 
             xhat_next_wo = par.R * xhat 
             eps_weight = 1
+            print(xhat, xhat_next_w)
         else:
             xhat_next_w = par.R/par.G * xhat * np.exp(par.eta) + np.exp(-par.mu)
             xhat_next_wo = par.R/par.G * xhat * np.exp(par.eta)
             eps_weight = par.eta_w
 
-        c_next_wo = par.pi*interp(xhat_next_wo) 
-        c_next_w = (1-par.pi)*interp(xhat_next_w)
+        c_next_wo = par.pi*interp(xhat_next_wo) * par.G * np.exp(-par.eta) 
+        c_next_w = (1-par.pi)*interp(xhat_next_w) * par.G * np.exp(-par.eta)
         
         # Future expected marginal utility
-        EU_next = np.sum(eps_weight**2*marg_util(c_next_w,par))+np.sum(eps_weight*marg_util(c_next_wo,par)) # gauss hermite weights: look into whether this is correct
+        EU_next = np.sum(eps_weight*marg_util(c_next_w,par))+np.sum(eps_weight**2*marg_util(c_next_wo,par)) # gauss hermite weights: look into whether this is correct
 
         # Current consumption
         c_now = inv_marg_util(par.R * par.beta * EU_next, par)
@@ -58,17 +59,16 @@ def EGM_vectorized (sol,t,par):
 def solve_EGM(par, vector = False):
      # initialize solution class
     class sol: pass
-    # shape = par.dim
-    shape = [100,40+2]
+    shape = par.dim
     sol.C = np.nan + np.zeros(shape)
     sol.xhat = np.nan + np.zeros(shape)
     
     # Last period, consume everything
-    sol.xhat[:,par.Tr_N+1] = par.grid_xhat.copy()
-    sol.C[:,par.Tr_N+1]= par.gamma1 * sol.xhat[:,par.Tr_N+1]
+    sol.xhat[:,len(sol.C[0,:])-1] = par.grid_xhat.copy()
+    sol.C[:,len(sol.C[0,:])-1]= par.gamma1 * sol.xhat[:,len(sol.C[0,:])-1]
 
     # Loop over periods
-    for t in range(par.Tr_N, par.t0_N, -1):  #from period T-2, until period 0, backwards
+    for t in range(par.Tr_N-1, par.t0_N-1, -1):  #from period T-2, until period 0, backwards
         if vector == True:
             sol = EGM_vectorized(sol, t, par)
         else:

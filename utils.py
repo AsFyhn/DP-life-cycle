@@ -17,12 +17,12 @@ def setup():
     class par: pass
     par.beta = 1.02#0.98 # discount factor
     par.R = 1.034 # interest rate
-    par.rho = 2 # risk aversion parameter in the utility function
+    par.rho = 0.5 # risk aversion parameter in the utility function
     par.gamma1 = 0.07 # mpc for retiress. maybe 
     par.pi = 0.9 # probability of income shock 
 
-    par.sigma_mu = 1
-    par.sigma_eta = 0.1
+    par.sigma_mu = 0.1
+    par.sigma_eta = 2
 
     par.G = 1
 
@@ -45,10 +45,10 @@ def setup():
 
     #4. End of period assets
     par.xhat = 3
-    par.grid_xhat = nonlinspace(0 + 1e-8,par.xhat,par.num_xhat,phi=1) # for phi > 1 non-linear
+    par.grid_xhat = nonlinspace(0 + 1e-8,par.xhat,par.num_xhat,phi=1.1) # for phi > 1 non-linear
 
     # Dimension of value function space
-    par.dim = [par.num_xhat,par.Tr_N]
+    par.dim = [par.num_xhat,par.Tr_N+1]
     
     return par
 
