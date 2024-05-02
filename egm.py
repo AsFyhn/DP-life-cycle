@@ -55,11 +55,11 @@ def solve_EGM(par, vector = False):
     shape = par.dim
 
     sol.C = np.nan + np.zeros(shape)
-    sol.M = np.nan + np.zeros(shape)
+    sol.a = np.nan + np.zeros(shape)
     
     # Last period, consume everything
-    sol.M[:,par.Tr_N-1] = par.M.copy()
-    sol.C[:,par.Tr_N-1]= sol.M[:,par.T-1].copy()
+    sol.a[:,par.Tr_N-1] = par.a.copy()
+    sol.C[:,par.Tr_N-1]= sol.a[:,par.T-1].copy()
 
     # Loop over periods
     for t in range(par.Tr_N-2, par.t0_N, -1):  #from period T-2, until period 0, backwards
@@ -68,6 +68,6 @@ def solve_EGM(par, vector = False):
         else:
             sol = EGM_loop(sol, t, par)
         # add zero consumption to account for borrowing constraint
-        sol.M[0,t] = 0
+        sol.a[0,t] = 0
         sol.C[0,t] = 0
     return sol

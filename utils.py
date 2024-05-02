@@ -44,8 +44,8 @@ def setup():
     par.num_a = 100
 
     #4. End of period assets
-    par.M = 10
-    par.grid_a = nonlinspace(0 + 1e-8,par.M,par.num_a,phi=1) # for phi > 1 non-linear
+    par.a = 10
+    par.grid_a = nonlinspace(0 + 1e-8,par.a,par.num_a,phi=1) # for phi > 1 non-linear
 
     # Dimension of value function space
     par.dim = [par.num_a,par.Tr_N]
