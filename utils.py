@@ -15,36 +15,36 @@ def inv_marg_util(u,par):
 def setup():
     # Setup specifications in class. 
     class par: pass
-    par.beta = 0.96 # discount factor
+    par.beta = 1.02#0.98 # discount factor
     par.R = 1.034 # interest rate
-    par.rho = 0.5 # risk aversion parameter in the utility function
+    par.rho = 2 # risk aversion parameter in the utility function
     par.gamma1 = 0.07 # mpc for retiress. maybe 
-    par.pi = 0.05 # probability of income shock 
+    par.pi = 0.9 # probability of income shock 
 
-    par.sigma_mu = 0.1
+    par.sigma_mu = 1
     par.sigma_eta = 0.1
 
-    par.G = 1.1 # this is a variable in the paper
-    
+    par.G = 1
+
     par.Tr = 65 # retirement age
     par.t0 = 25 # start working
     par.Tr_N = par.Tr - par.t0 # normalized
-    par.to_N = par.t0 - par.t0 # normalized
+    par.t0_N = par.t0 - par.t0 # normalized
 
     # Gauss Hermite weights and points
     par.order = 12
     x,w = gauss_hermite(par.order)
 
-    par.eta = np.exp(np.sqrt(2)*par.sigma_eta*x)
+    par.eta = np.sqrt(2)*par.sigma_eta*x
     par.eta_w = w/np.sqrt(np.pi)
-    par.mu = np.exp(np.sqrt(2)*par.sigma_mu*x)
+    par.mu = np.sqrt(2)*par.sigma_mu*x
     par.mu_w = w/np.sqrt(np.pi)
 
     # Grid
     par.num_xhat = 100
 
     #4. End of period assets
-    par.xhat = 10
+    par.xhat = 3
     par.grid_xhat = nonlinspace(0 + 1e-8,par.xhat,par.num_xhat,phi=1) # for phi > 1 non-linear
 
     # Dimension of value function space
