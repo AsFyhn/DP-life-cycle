@@ -1,3 +1,5 @@
+import numpy as np
+
 def util(c,L,par):
     """ Utility function"""
     return ((c**(1.0-par.rho))/(1.0-par.rho)-par.alpha*(1-L))
@@ -9,3 +11,53 @@ def marg_util(c,par):
 def inv_marg_util(u,par):
     """ Inverse of marginal utility function"""
     return u**(-1/par.rho)
+
+def setup():
+    # Setup specifications in class. 
+    class par: pass
+    par.beta = 0.98 # discount factor
+    par.R = 1.02 # interest rate
+    par.rho = 2.0 # risk aversion parameter in the utility function
+    par.gamma = 0.25 # mpc for retiress. maybe 
+    par.pi = 0.05 # probability of income shock 
+
+    par.sigma_mu = 0.1
+    par.sigma_eta = 0.1
+
+    par.G = 0.1 # this is a variable in the paper
+    
+    # Gauss Hermite weights and points
+    par.num_shocks = 5
+    x,w = gauss_hermite(par.num_shocks)
+    par.eps = np.exp(par.sigma*np.sqrt(2)*x)
+    par.eps_w = w/np.sqrt(np.pi)
+    
+    # Simulation parameters
+    par.simN = 10000
+    par.M_ini = 1.5
+    
+    # Grid
+    par.num_a = 100
+    #4. End of period assets
+    par.grid_a = nonlinspace(0 + 1e-8,par.M,par.num_a,1.1)
+
+    # Dimension of value function space
+    par.dim = [par.num_a,par.T]
+    
+    return par
+
+def gauss_hermite(n):
+
+    # a. calculations
+    i = np.arange(1,n)
+    a = np.sqrt(i/2)
+    CM = np.diag(a,1) + np.diag(a,-1)
+    L,V = np.linalg.eig(CM)
+    I = L.argsort()
+    V = V[:,I].T
+
+    # b. nodes and weights
+    x = L[I]
+    w = np.sqrt(np.pi)*V[:,0]**2
+
+    return x,w
