@@ -31,7 +31,7 @@ def setup():
     par.Tr_N = par.Tr - par.t0 # normalized
     par.t0_N = par.t0 - par.t0 # normalized
 
-    # Gauss Hermite weights and points
+    # Gauss Hermite weights and points: ---------- LOOK AT BUFFERSTOCK MODEL CODE FOR EXAMPLE TO MAKE THIS RIGHT 
     par.order = 12
     x,w = gauss_hermite(par.order,numpy=True)
 
