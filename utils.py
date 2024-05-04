@@ -15,14 +15,14 @@ def inv_marg_util(u,par):
 def setup():
     # Setup specifications in class. 
     class par: pass
-    par.beta = 1.02#0.98 # discount factor
+    par.beta = 0.90#0.98 # discount factor
     par.R = 1.034 # interest rate
     par.rho = 0.5 # risk aversion parameter in the utility function
     par.gamma1 = 0.07 # mpc for retiress. maybe 
-    par.pi = 0.9 # probability of income shock 
+    par.pi = 0.1 # probability of income shock 
 
-    par.sigma_mu = 0.1
-    par.sigma_eta = 2
+    par.sigma_mu = 0.2
+    par.sigma_eta = 0.2
 
     par.G = 1
 
@@ -33,7 +33,7 @@ def setup():
 
     # Gauss Hermite weights and points
     par.order = 12
-    x,w = gauss_hermite(par.order)
+    x,w = gauss_hermite(par.order,numpy=True)
 
     par.eta = np.sqrt(2)*par.sigma_eta*x
     par.eta_w = w/np.sqrt(np.pi)
@@ -41,32 +41,50 @@ def setup():
     par.mu_w = w/np.sqrt(np.pi)
 
     # Grid
-    par.num_xhat = 100
+    par.num_xhat = 50 #100 they use 100 in their paper
 
     #4. End of period assets
     par.xhat = 3
-    par.grid_xhat = nonlinspace(0 + 1e-8,par.xhat,par.num_xhat,phi=1.1) # for phi > 1 non-linear
-
+    par.grid_xhat = linspace_kink(x_min=1e-6,x_max=par.xhat,n=par.num_xhat, x_int=2)#nonlinspace(0 + 1e-6,par.xhat,par.num_xhat,phi=1.1) # for phi > 1 non-linear
     # Dimension of value function space
     par.dim = [par.num_xhat,par.Tr_N+1]
     
     return par
 
-def gauss_hermite(n):
-    # a. calculations
-    i = np.arange(1,n)
-    a = np.sqrt(i/2)
-    CM = np.diag(a,1) + np.diag(a,-1)
-    L,V = np.linalg.eig(CM)
-    I = L.argsort()
-    V = V[:,I].T
+def gauss_hermite(n,numpy=True):
+    if numpy:
+        x,w = np.polynomial.hermite.hermgauss(n)
+    else:
+        # a. calculations
+        i = np.arange(1,n)
+        a = np.sqrt(i/2)
+        CM = np.diag(a,1) + np.diag(a,-1)
+        L,V = np.linalg.eig(CM)
+        I = L.argsort()
+        V = V[:,I].T
 
-    # b. nodes and weights
-    x = L[I]
-    w = np.sqrt(np.pi)*V[:,0]**2
-
+        # b. nodes and weights
+        x = L[I]
+        w = np.sqrt(np.pi)*V[:,0]**2
     return x,w
 
+import numpy as np
+def linspace_kink(x_min, x_max, n,x_int):
+    """
+    like np.linspace between with unequal spacing
+    """
+    # 1. recursion
+    y = np.empty(n)
+ 
+    y[0] = x_min
+    for i in range(1, n//2):
+        y[i] = y[i-1] + (x_int-y[i-1]) / (n-i)
+    for i in range(n//2, n):
+        y[i] = y[i-1] + (x_max-y[i-1]) / (n-i)
+    # 3. assert increaing
+    assert np.all(np.diff(y) > 0)
+ 
+    return y
 
 def nonlinspace(x_min, x_max, n, phi):
     """ like np.linspace between with unequal spacing
