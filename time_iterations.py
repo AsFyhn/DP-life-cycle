@@ -41,28 +41,30 @@ def solve_ti(par):
 
 def euler_error_func(c,t,par,sol):
     #Find next period's assets
-    gh_node_pos = gh_node_neg = np.ones(len(par.mu))
-    gh_weight = np.ones(len(par.mu))
-    if t<par.Tr_N-1:
-        gh_node_pos = gh_node_pos*np.exp(par.mu)
-        gh_node_neg = gh_node_neg*np.exp(-par.mu)
-        gh_weight = gh_weight*par.mu_w
+    if t+1<par.Tr_N:    # No pension in the next period
+        fac1 = (par.R/par.G) * (np.exp(par.eta))[np.newaxis,:] + (np.exp(-par.mu))[np.newaxis,:]
+        fac2 = (par.R/par.G) * (np.exp(par.eta))[np.newaxis,:]
+        w1 = par.w      # weight when both shocks are positive
+        w2 = par.eta_w  # weight when only one shock
 
-    xhat_next1 = par.R/par.G * (par.grid_xhat - c)[:,np.newaxis]*(np.exp(par.eta))[np.newaxis,:] + (np.exp(-par.mu))[np.newaxis,:] 
-    xhat_next2 = par.R/par.G * (par.grid_xhat - c)[:,np.newaxis]*(np.exp(par.eta))[np.newaxis,:] 
+    else:               # pension in the next period
+        fac1 = par.R
+        fac2 = par.R
+        w1 = np.ones(len(par.eta_w))
+        w2 = np.ones(len(par.eta_w))
+
+    xhat_next1 = fac1 * (par.grid_xhat - c)[:,np.newaxis]
+    xhat_next2 = fac2 * (par.grid_xhat - c)[:,np.newaxis]
     #Interpolate next period's consumption
     interp = interpolate.interp1d(par.grid_xhat,sol.C[:,t+1], bounds_error=False, fill_value = "extrapolate") 
-    c_next1 = interp(xhat_next1)*par.G*(np.exp(-par.eta))[np.newaxis,:]
-    c_next2 = interp(xhat_next2)*par.G*(np.exp(-par.eta))[np.newaxis,:]
-    
-    # EU_next0 = par.pi*np.sum(eps_weight[np.newaxis,:]*marg_util(c_next_0,par)*par.G*par.eta, axis=1)
-    # EU_next1 = (1-par.pi)*np.sum((eps_weight)[np.newaxis,:]*marg_util(c_next_1,par)*par.G*par.eta,axis=1)
+    outside_fac = par.G * (np.exp(-par.eta))[np.newaxis,:]
+    c_next1 = interp(xhat_next1) * outside_fac
+    c_next2 = interp(xhat_next2) * outside_fac
 
+    # average expected marginal utility
     EU_next = (
-         par.pi  * np.sum(gh_weight[np.newaxis,:]*(1/(np.pi))*marg_util(c_next1,par),axis=1) 
-         + (1-par.pi) * np.sum(gh_weight[np.newaxis,:]* (1/(np.pi)) *marg_util(c_next2,par),axis=1))
-    # print(EU_next)
-    
+         (1-par.pi)  * np.sum(w1 * (1/(np.pi))*marg_util(c_next1,par),axis=1)  # expected value given U > 0
+         + par.pi * np.sum(w2 * (1/(np.pi)) *marg_util(c_next2,par),axis=1))   # expected value given U = 0
     
     # Calculate current period marginal utility
     U_now = marg_util(c,par) 

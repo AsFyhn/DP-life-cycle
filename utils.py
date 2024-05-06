@@ -15,14 +15,14 @@ def inv_marg_util(u,par):
 def setup():
     # Setup specifications in class. 
     class par: pass
-    par.beta = 0.90#0.98 # discount factor
-    par.R = 1.034 # interest rate
+    par.beta = 0.95 # discount factor
+    par.R = 1.05 # interest rate
     par.rho = 0.5 # risk aversion parameter in the utility function
     par.gamma1 = 0.07 # mpc for retiress. maybe 
     par.pi = 0.1 # probability of income shock 
 
-    par.sigma_mu = 0.2
-    par.sigma_eta = 0.2
+    par.sigma_mu = 0.1
+    par.sigma_eta = 0.1
 
     par.G = 1
 
@@ -40,11 +40,22 @@ def setup():
     par.mu = np.sqrt(2)*par.sigma_mu*x
     par.mu_w = w/np.sqrt(np.pi)
 
+    # Vectorize all
+    ## Repeat and tile are used to create all combinations of shocks (like a tensor product)
+    par.eta = np.tile(par.eta,x.size)       # Repeat entire array x times
+    par.eta_w = np.repeat(par.eta_w,w.size)    # Repeat each element of the array x times
+    par.mu = np.tile(par.mu,x.size)
+    par.mu_w = np.repeat(par.mu_w,w.size)
+
+    # Weights for each combination of shocks
+    par.w = par.mu_w * par.eta_w
+    assert (1-sum(par.w) < 1e-8), f'{par.w}'
+
     # Grid
     par.num_xhat = 50 #100 they use 100 in their paper
 
     #4. End of period assets
-    par.xhat = 3
+    par.xhat = 10
     par.grid_xhat = linspace_kink(x_min=1e-6,x_max=par.xhat,n=par.num_xhat, x_int=2)#nonlinspace(0 + 1e-6,par.xhat,par.num_xhat,phi=1.1) # for phi > 1 non-linear
     # Dimension of value function space
     par.dim = [par.num_xhat,par.Tr_N+1]
