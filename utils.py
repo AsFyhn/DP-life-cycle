@@ -13,6 +13,7 @@ def inv_marg_util(u,par):
     return u**(-1/par.rho)
 
 def setup():
+    # https://github.com/ThomasHJorgensen/Sensitivity/blob/master/GP2002/tools/misc.py
     # Setup specifications in class. 
     class par: pass
     par.beta = 0.95 # discount factor
@@ -39,6 +40,13 @@ def setup():
     par.eta_w = w/np.sqrt(np.pi)
     par.mu = np.sqrt(2)*par.sigma_mu*x
     par.mu_w = w/np.sqrt(np.pi)
+
+    # following Thomas 
+    par.mu_w *= (1-par.pi)
+    par.mu_w = np.insert(par.mu_w,0,par.pi)
+
+    par.mu = (par.mu) 
+    xi = np.insert(xi,0,0)
 
     # Vectorize all
     ## Repeat and tile are used to create all combinations of shocks (like a tensor product)
@@ -79,7 +87,6 @@ def gauss_hermite(n,numpy=True):
         w = np.sqrt(np.pi)*V[:,0]**2
     return x,w
 
-import numpy as np
 def linspace_kink(x_min, x_max, n,x_int):
     """
     like np.linspace between with unequal spacing
