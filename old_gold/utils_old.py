@@ -32,18 +32,28 @@ def setup():
     par.Tr_N = par.Tr - par.t0 # normalized
     par.t0_N = par.t0 - par.t0 # normalized
 
-    # Gauss Hermite weights and points: # mu is transtoritory income shock and eta is permanent income shock
+    # Gauss Hermite weights and points: ---------- LOOK AT BUFFERSTOCK MODEL CODE FOR EXAMPLE TO MAKE THIS RIGHT 
     par.order = 12
-    
-    par.eta, par.eta_w, par.mu, par.mu_w, par.Nshocks = create_shocks(
-        sigma_psi=par.sigma_eta,
-        Npsi=par.order,
-        sigma_xi=par.sigma_mu,
-        Nxi=par.order,
-        pi=par.pi,
-        mu=0,
-        mu_psi=0,
-        mu_xi=0)
+    x,w = gauss_hermite(par.order,numpy=True)
+
+    par.eta = np.sqrt(2)*par.sigma_eta*x
+    par.eta_w = w/np.sqrt(np.pi)
+    par.mu = np.sqrt(2)*par.sigma_mu*x
+    par.mu_w = w/np.sqrt(np.pi)
+
+    # following Thomas 
+    # par.mu_w *= (1-par.pi)
+    # par.mu_w = np.insert(par.mu_w,0,par.pi)
+
+    # par.mu = (par.mu) 
+    # xi = np.insert(xi,0,0)
+
+    # Vectorize all
+    ## Repeat and tile are used to create all combinations of shocks (like a tensor product)
+    par.eta = np.tile(par.eta,x.size)       # Repeat entire array x times
+    par.eta_w = np.repeat(par.eta_w,w.size)    # Repeat each element of the array x times
+    par.mu = np.tile(par.mu,x.size)
+    par.mu_w = np.repeat(par.mu_w,w.size)
 
     # Weights for each combination of shocks
     par.w = par.mu_w * par.eta_w
@@ -53,45 +63,12 @@ def setup():
     par.num_xhat = 50 #100 they use 100 in their paper
 
     #4. End of period assets
-    par.xhat = 3
+    par.xhat = 10
     par.grid_xhat = linspace_kink(x_min=1e-6,x_max=par.xhat,n=par.num_xhat, x_int=2)#nonlinspace(0 + 1e-6,par.xhat,par.num_xhat,phi=1.1) # for phi > 1 non-linear
     # Dimension of value function space
     par.dim = [par.num_xhat,par.Tr_N+1]
     
     return par
-
-def create_shocks(sigma_psi,Npsi,sigma_xi,Nxi,pi,mu,mu_psi=None,mu_xi=None):
-    
-    # a. gauss hermite
-    psi, psi_w = log_normal_gauss_hermite(sigma_psi, Npsi,mu_psi)
-    xi, xi_w = log_normal_gauss_hermite(sigma_xi, Nxi,mu_xi)
- 
-    # b. add low inncome shock
-    if pi > 0:
-        # a. weights
-        xi_w *= (1.0-pi)
-        xi_w = np.insert(xi_w,0,pi)
-
-        # b. values
-        xi = (xi-mu*pi) #/ (1.0-pi)
-        xi = np.insert(xi,0,mu)
-
-    
-    # c. tensor product
-    psi,xi = np.meshgrid(psi,xi,indexing='ij')
-    psi_w,xi_w = np.meshgrid(psi_w,xi_w,indexing='ij')
-
-    return psi.ravel(), psi_w.ravel(), xi.ravel(), xi_w.ravel(), psi.size
-
-def log_normal_gauss_hermite(sigma, N,mu=None):
-    # a. gauss hermite
-    x,w = gauss_hermite(N,numpy=True)
- 
-    # b. log normal
-    psi = np.exp(mu + sigma*x)
-    psi_w = w/np.sqrt(np.pi)
- 
-    return psi, psi_w
 
 def gauss_hermite(n,numpy=True):
     if numpy:
