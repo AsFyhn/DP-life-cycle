@@ -44,8 +44,6 @@ def setup(g_constant:bool=True):
         # permanent income growth
         polY = np.array([6.8013936, 0.3264338, -0.0148947, 0.000363424, -4.411685e-6, 2.056916e-8]) # constant first
         Ybar = np.exp(polY @ agep ) # matrix multiplication
-        print(f'Shape of Ybar {Ybar[par.Tr_N].shape}')
-        print(f'Shape of first element {Ybar[1:(par.Tr_N+1)].shape}, and second element {Ybar[0:(par.Tr_N)].shape}')
         par.G = Ybar[1:(par.Tr_N+1)]/Ybar[0:par.Tr_N] # growth rate is shiftet forward, so g[t+1] is G[t] in code
 
     # Gauss Hermite weights and points: # mu is transtoritory income shock and eta is permanent income shock
