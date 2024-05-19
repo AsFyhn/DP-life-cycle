@@ -11,14 +11,14 @@ class SMD:
         return (data.C_avg)
     
     def obj_function(self,theta,est_par,W):
-        # 1. update parameters 
+        # a. update parameters 
         for i in range(len(est_par)):
             setattr(self.model,est_par[i],theta[i]) # like par.key = val
 
-        # 2. solve model with current parameters
+        # b. solve model with current parameters
         sol = self.solver(self.model) # consider adding the solve method to the class beforehand
 
-        # 3. simulate data from the model and calculate moments [have this as a complete function, used for standard errors]
+        # c. simulate data from the model and calculate moments [have this as a complete function, used for standard errors]
         sim = self.simulator.sim_setup(self.model)
         self.simulator.draw_random(self.model, sim)
         self.sim = self.simulator.simulate(sim, self.model, sol)
@@ -31,10 +31,7 @@ class SMD:
         else:
             self.mom_sim = self.mom_fun(self.sim)
 
-        # self.model.simulate() # consider adding the solve method to the class beforehand
-        # self.mom_sim = self.mom_fun(self.model.sim)
-
-        # 4. calculate objective function and return it
+        # d. calculate objective function and return it
         self.diff = self.mom_data - self.mom_sim
         self.obj  = (np.transpose(self.diff) @ W) @ self.diff
 
@@ -58,18 +55,19 @@ class SMD:
         if W is None: 
             W = np.eye(len(self.mom_data))
 
-        # 1. store initial parameters
+        # a. store initial parameters
         thetainit = [getattr(self.model,est_par[i]) for i in range(len(est_par))]
 
-        # 2. Check dimensions of weight matrix and data
+        # b. Check dimensions of weight matrix and data
         assert(len(W[0])==len(self.mom_data)) 
 
+        # c. estimate parameters
         if not grid:
-            # 3a. estimate parameters by minimizing the objective function
+            # i. estimate parameters by minimizing the objective function
             self.est_out = minimize(self.obj_function, theta0, (est_par,W,), method='nelder-mead',options={'disp': False})        
             x_opt = self.est_out.x
         else:
-            # 3b. estimate parameters by minimizing the objective function
+            # ii. estimate parameters by minimizing the objective function
             if not hasattr(self,'beta_grid') or not hasattr(self,'rho_grid'):
                 raise ValueError('Please provide beta_grid and rho_grid')
             self.grid = np.empty((len(self.beta_grid),len(self.rho_grid))) + np.nan
@@ -84,7 +82,7 @@ class SMD:
         self.est = x_opt
         self.W = W
 
-        # 5. reset the model parameters to the initial values
+        # d. reset the model parameters to the initial values
         for i in range(len(est_par)):
             setattr(self.model,est_par[i],thetainit[i])
 
