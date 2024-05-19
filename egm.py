@@ -75,8 +75,9 @@ def solve_egm(t,sol,par):
         c_plus = np.fmax(1.0e-10 , c_plus ) # consumption must be non-negative
 
         # expected marginal utility
-        w = par.mu_w[i]*par.eta_w[i]
-        Eu += w*marg_util(fac*c_plus,par) # In the original code they do not include all in fac as I do here
+        # w = par.mu_w[i]*par.eta_w[i]
+        w = par.w[i]
+        Eu += w*marg_util(fac*c_plus,par) 
 
     # invert Euler equation
     sol.c[:,t] = inv_marg_util(par.beta*par.R*Eu,par) 

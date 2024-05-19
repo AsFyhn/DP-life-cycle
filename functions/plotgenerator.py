@@ -8,6 +8,7 @@ class PlotFigure:
         self.fig, self.ax = plt.subplots(figsize=figsize)
         self.plots = []
         self.fontname = fontname
+        self.ax.tick_params(axis='y')
     def add_histogram(self, data, bins=10, label='',normal_distribution=False, color=None):
         """
         Add a histogram to the figure.
@@ -27,7 +28,7 @@ class PlotFigure:
             y = stats.norm.pdf(x, mean, std)
             self.plots.append(self.ax.plot(x, y, label='Normal Distribution', color='red'))
 
-    def add_plot(self, x, y, label='', linestyle='-', marker=None, color=None):
+    def add_plot(self, x, y, label='', linestyle='-',axis='y1', marker=None, color=None):
         """
         Add a plot to the figure.
         
@@ -38,10 +39,25 @@ class PlotFigure:
         - marker: Marker for the plot points (default is None).
         - color: Color for the plot (default is None).
         """
+        if axis == 'y2':
+            if not hasattr(self, 'ax_sec'):
+                self.add_secondary_yaxis()
+                obj = self.ax_sec
+        else: 
+            obj = self.ax
         if marker == 'o':
-            self.plots.append(self.ax.scatter(x, y, label=label, marker=marker, color=color))
+            new_plot = obj.scatter(x, y, label=label, marker=marker, color=color)
         else:
-            self.plots.append(self.ax.plot(x, y, label=label, linestyle=linestyle, marker=marker, color=color))
+            new_plot = obj.plot(x, y, label=label, linestyle=linestyle, marker=marker, color=color)
+        self.plots.append(new_plot)
+
+    def _set_scaling(self,):
+        if not hasattr(self, 'ax_sec'):
+            self.add_secondary_yaxis()
+            # set same limits as primary y-axis
+            limits1 = self.ax.get_ylim()
+            self.ax_sec.set_ylim(limits1)
+
     def add_hline(self, y, label='', linestyle='-', color='black'):
         """
         Add a horizontal line to the figure.
@@ -109,6 +125,18 @@ class PlotFigure:
             self.ax.yaxis.grid(color=color,zorder=0)
         else:
             print("Invalid axis. Please specify 'both', 'x', or 'y'.")
+
+    def add_secondary_yaxis(self, label='', color='tab:blue'):
+        """
+        Add a secondary y-axis to the plot that overlays the primary y-axis.
+        
+        Parameters:
+        - label: Label for the secondary y-axis.
+        - color: Color for the secondary y-axis.
+        """
+        self.ax_sec = self.ax.twinx()
+        self.ax_sec.tick_params(axis='y')
+
     def show(self):
         """Display the figure."""
         plt.show()
