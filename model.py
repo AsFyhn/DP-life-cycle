@@ -4,7 +4,6 @@ import sys
 sys.path.append(os.path.abspath(''))
 from utils import create_shocks, linspace_kink
 
-
 class gp_model:
     def __init__(self) -> None:
         """ 
@@ -58,17 +57,18 @@ class gp_model:
 
     def _setup_shocks(self):
         self.par.eta, self.par.eta_w, self.par.mu, self.par.mu_w, self.par.Nshocks = create_shocks(
-            sigma_eta=self.par.sigma_eta, # standard deviation of the permanent income shock
-            mean_eta=0, # mean of the permanent income shock
-            N_eta=self.par.order, # number of nodes in the permanent income shock
-            sigma_mu=self.par.sigma_mu, # standard deviation of the transitory income shock
-            mean_mu=0, # mean of the transitory income shock
-            N_mu=self.par.order, # number of nodes in the transitory income shock
-            pi=self.par.pi,
+            sigma_eta=self.par.sigma_eta,   # standard deviation of the permanent income shock
+            mean_eta=0,                     # mean of the permanent income shock
+            N_eta=self.par.order,           # number of nodes in the permanent income shock
+            sigma_mu=self.par.sigma_mu,     # standard deviation of the transitory income shock
+            mean_mu=0,                      # mean of the transitory income shock
+            N_mu=self.par.order,            # number of nodes in the transitory income shock
+            pi=self.par.pi,                 # probability of the bad state
             )
 
         # Weights for each combination of shocks
         self.par.w = self.par.mu_w * self.par.eta_w
+        # Check if the sum of weights is close to 1
         assert (1-sum(self.par.w) < 1e-8), f'{self.par.w}'    
     
     def _setup_grid(self):

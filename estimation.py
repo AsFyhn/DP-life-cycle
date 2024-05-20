@@ -5,26 +5,30 @@ class SMD:
     def __init__(self, model, solver, simulator,mom_data):
         self.model = model
         self.mom_data = mom_data
-        self.solver = solver
+        self.solver = solver(model)
         self.simulator = simulator
+        self.age_groups = False # default is False
+
     def mom_fun(self,data):
         return (data.C_avg)
     
     def obj_function(self,theta,est_par,W):
         # a. update parameters 
         for i in range(len(est_par)):
-            setattr(self.model,est_par[i],theta[i]) # like par.key = val
+            setattr(self.solver.par,est_par[i],theta[i]) # like par.key = val
 
         # b. solve model with current parameters
-        sol = self.solver(self.model) # consider adding the solve method to the class beforehand
+        self.solver.solve() # consider adding the solve method to the class beforehand
+        sol = self.solver.sol
 
         # c. simulate data from the model and calculate moments [have this as a complete function, used for standard errors]
-        sim = self.simulator.sim_setup(self.model)
-        self.simulator.draw_random(self.model, sim)
-        self.sim = self.simulator.simulate(sim, self.model, sol)
+        # sim = self.simulator.sim_setup(self.solver.par)
+        # self.simulator.draw_random(self.solver.par, sim)
+        # self.sim = self.simulator.simulate(sim, self.solver.par, sol)
+        
+        self.sim = self.simulator(par=self.solver.par,sol=sol,simN=10000).sim
 
-        age_groups = False
-        if age_groups:
+        if self.age_groups:
             self.mom_sim = np.empty(4) + np.nan
             for j, i in enumerate(range(0,len(self.sim.C_avg),10)):
                 self.mom_sim[j] = self.sim.C_avg[i:i+10].mean()
@@ -37,13 +41,15 @@ class SMD:
 
         return self.obj 
 
-    def estimate(self,theta0,est_par,W=None, grid=False):
+    def estimate(self,theta0,est_par,bounds=[],W=None, grid=False):
         """
         Estimate the model parameters using the simulated method of moments
             Args:
                 theta0: initial guess for the parameters
                 est_par: list of the parameters to be estimated
+                bounds: bounds for the parameters
                 W: weight matrix
+                grid: boolean indicating whether to estimate the parameters on a grid
             Returns:
                 None
             
@@ -64,7 +70,8 @@ class SMD:
         # c. estimate parameters
         if not grid:
             # i. estimate parameters by minimizing the objective function
-            self.est_out = minimize(self.obj_function, theta0, (est_par,W,), method='nelder-mead',options={'disp': False})        
+            self.est_out = minimize(self.obj_function, theta0, (est_par,W,), bounds=bounds,
+                                    method='nelder-mead',options={'disp': False}, )
             x_opt = self.est_out.x
         else:
             # ii. estimate parameters by minimizing the objective function
