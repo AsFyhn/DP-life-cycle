@@ -47,8 +47,6 @@ class gp_model:
         self.par.xhat = 3 # End of period assets
         self.par.xmin = 0 # minimum value of the grid
 
-        # e) simulation parameters
-        self.par.init_P = 10
         
         # f) kwargs and additional parameters
         for key, value in kwargs.items():
@@ -79,13 +77,23 @@ class gp_model:
         # create a grid of different ages
         grid_age = [float(age) for age in range(self.par.t0,self.par.Tr+1+1)]
         self.par.grid_age = np.array(grid_age)
-        agep = np.empty((6,len(self.par.grid_age)))
-        for i in range(6):
+        #agep = np.empty((6,len(self.par.grid_age)))
+        #for i in range(6):
+            #agep[i,:] = self.par.grid_age**i
+        agep = np.empty((5,len(self.par.grid_age)))
+        for i in range(5):
             agep[i,:] = self.par.grid_age**i
 
+        age_groups = [29.8,39.5,49.5,59.6,74.2]
+        y_before_tax = [48233, 89514, 118149, 128980, 105498, 68059] #evt. brug after tax income
+        income = (y_before_tax[1:])        
 
         # permanent income growth
-        polY = np.array([6.8013936, 0.3264338, -0.0148947, 0.000363424, -4.411685e-6, 2.056916e-8]) # constant first
-        Ybar = np.exp(polY @ agep ) # matrix multiplication
+        #polY = np.array([6.8013936, 0.3264338, -0.0148947, 0.000363424, -4.411685e-6, 2.056916e-8]) # constant first
+        polY = np.polyfit(age_groups, income, 4)
+        Ybar=np.polyval(polY,grid_age)
         self.par.G = Ybar[1:(self.par.Tr_N+1)]/Ybar[0:self.par.Tr_N] # growth rate is shiftet forward, so g[t+1] is G[t] in code
         
+
+        # simulation parameters
+        self.par.init_P = np.log(Ybar[0])
