@@ -33,7 +33,7 @@ class gp_model:
         # b) life cycle
         self.par.Tr = 66 # retirement age
         self.par.t0 = 26 # start working
-        self.par.Tr_N = self.par.Tr - self.par.t0 + 1  # normalized
+        self.par.Tr_N = self.par.Tr - self.par.t0  # normalized
         self.par.t0_N = self.par.t0 - self.par.t0 # normalized
 
         # c) Gauss Hermite weights and points: # mu is transtoritory income shock and eta is permanent income shock
@@ -74,26 +74,27 @@ class gp_model:
         self.par.grid_xhat = linspace_kink(x_min=self.par.xmin+1e-6,x_max=self.par.xhat,n=self.par.num_xhat, x_int=1) # create a grid with more points below 1
 
     def _setup_income_shifter(self,):
-        # create a grid of different ages
-        grid_age = [float(age) for age in range(self.par.t0,self.par.Tr+1+1)]
-        self.par.grid_age = np.array(grid_age)
-        #agep = np.empty((6,len(self.par.grid_age)))
-        #for i in range(6):
-            #agep[i,:] = self.par.grid_age**i
-        agep = np.empty((5,len(self.par.grid_age)))
-        for i in range(5):
-            agep[i,:] = self.par.grid_age**i
+        # a) define income data
+        age_groups = [29.8, 39.5, 49.5, 59.6, 69.3]
+        income = [89514, 118149, 128980, 105498, 68059] #income is before tax! consider using after tax income
+        consumption = [67883, 86049, 91074, 78079, 60844]
+        # create dictionary        
+        self.income_data = {age:income for age,income in zip(age_groups,income)}
+        self.consumption_data = {age:consumption for age,consumption in zip(age_groups,consumption)}
 
-        age_groups = [29.8,39.5,49.5,59.6,74.2]
-        y_before_tax = [48233, 89514, 118149, 128980, 105498, 68059] #evt. brug after tax income
-        income = (y_before_tax[1:])        
 
-        # permanent income growth
-        #polY = np.array([6.8013936, 0.3264338, -0.0148947, 0.000363424, -4.411685e-6, 2.056916e-8]) # constant first
-        polY = np.polyfit(age_groups, income, 4)
-        Ybar=np.polyval(polY,grid_age)
-        self.par.G = Ybar[1:(self.par.Tr_N+1)]/Ybar[0:self.par.Tr_N] # growth rate is shiftet forward, so g[t+1] is G[t] in code
-        
+        # b) permanent income growth
+        polY = np.polyfit(age_groups, income, 4) # create a polynomial of 4th degree
+        polC = np.polyfit(age_groups, consumption, 4) # create a polynomial of 4th degree
 
-        # simulation parameters
-        self.par.init_P = np.log(Ybar[0])
+        self.grid_age = np.array([float(age) for age in range(self.par.t0,self.par.Tr+1)])  # create a grid of different ages
+
+        self.Ybar=np.polyval(polY,self.grid_age) # interpolate
+        self.Ybar = np.log(self.Ybar)
+        self.Cbar=np.log(np.polyval(polC,self.grid_age))
+
+        # create growth rate in income
+        self.par.G = self.Ybar[1:(self.par.Tr_N+1)]/self.Ybar[0:self.par.Tr_N] # growth rate is shiftet forward
+
+        # c) set simulation parameters
+        self.par.init_P = self.Ybar[0]
