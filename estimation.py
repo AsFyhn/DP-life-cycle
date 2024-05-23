@@ -41,7 +41,7 @@ class SMD:
 
         return self.obj 
 
-    def estimate(self,theta0,est_par,bounds=[],W=None, grid=False):
+    def estimate(self,theta0,est_par,bounds=None,W=None, grid=False):
         """
         Estimate the model parameters using the simulated method of moments
             Args:
