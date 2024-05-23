@@ -46,7 +46,7 @@ class solver:
     def solve_bf_retirement(self,t):
         par = self.par
 
-        c_plus = (par.gamma1*par.R*(par.grid_xhat))/par.G[t]
+        c_plus = (par.gamma1*par.R*(par.grid_xhat-par.xmin))/par.G[t] # par.xmin is 0 in GP but not in LC
         
         dU = marg_util(par.G[t]*c_plus,par)
         self.sol.c[:,t] = inv_marg_util(par.beta*par.R*dU,par)
@@ -58,7 +58,7 @@ class solver:
 
         # a. initialize
         c_next = np.zeros(par.num_xhat+1)
-        m_next = np.zeros(par.num_xhat+1) 
+        m_next = np.zeros(par.num_xhat+1) + par.xmin
         c_next[1:par.num_xhat+1] = self.sol.c[:,t+1]
         m_next[1:par.num_xhat+1] = self.sol.m[:,t+1]
 

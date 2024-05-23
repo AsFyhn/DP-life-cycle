@@ -12,7 +12,7 @@ def inv_marg_util(u,par):
     """ Inverse of marginal utility function"""
     return u**(-1/par.rho)
 
-def log_normal_gauss_hermite(sigma, N,mu=None):
+def log_normal_gauss_hermite(sigma, N,mu=0):
     # a. gauss hermite
     x,w = gauss_hermite(N,numpy=True)
  

@@ -88,9 +88,15 @@ class PlotFigure:
         """Set the x-axis label for the figure."""
         self.ax.set_xlabel(xlabel,fontname=self.fontname)
 
-    def set_ylabel(self, ylabel):
+    def set_ylabel(self, ylabel, axis='y1'):
         """Set the y-axis label for the figure."""
-        self.ax.set_ylabel(ylabel,fontname=self.fontname)
+        if axis=='y2':
+            if hasattr(self, 'ax_sec'):
+                self.ax_sec.set_ylabel(ylabel,fontname=self.fontname)
+            else: 
+                raise ValueError('Secondary y-axis not added. Please add a secondary y-axis before setting the label.')
+        else:
+            self.ax.set_ylabel(ylabel,fontname=self.fontname)
 
     def add_legend(self):
         """Add a legend to the figure."""

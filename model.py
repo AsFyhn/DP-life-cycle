@@ -5,14 +5,15 @@ sys.path.append(os.path.abspath(''))
 from utils import create_shocks, linspace_kink
 
 class gp_model:
-    def __init__(self) -> None:
+    def __init__(self,**kwargs) -> None:
         """ 
         This class contains the parameters and other deterministic variables for the model.
         """
         class par: pass
         self.par = par
         # set parameters 
-        self.set_parameters()
+        
+        self.set_parameters(**kwargs)
         # setup shocks, grid and income shifter
         self.main_setup()
     
@@ -30,7 +31,7 @@ class gp_model:
         self.par.pi = 0.00302 # probability of income shock 
         
         # b) life cycle
-        self.par.Tr = 65 # retirement age
+        self.par.Tr = 66 # retirement age
         self.par.t0 = 26 # start working
         self.par.Tr_N = self.par.Tr - self.par.t0 + 1  # normalized
         self.par.t0_N = self.par.t0 - self.par.t0 # normalized
@@ -44,15 +45,15 @@ class gp_model:
         #  d) grid parameters
         self.par.num_xhat = 300 # number of points in the grid
         self.par.xhat = 3 # End of period assets
+        self.par.xmin = 0 # minimum value of the grid
 
         # e) simulation parameters
         self.par.init_P = 10
         
-        
         # f) kwargs and additional parameters
         for key, value in kwargs.items():
             setattr(self.par, key, value)
-
+    
         self.par.dim = [self.par.num_xhat,self.par.Tr_N+1] # Dimension of value function space
 
     def _setup_shocks(self):
@@ -72,7 +73,7 @@ class gp_model:
         assert (1-sum(self.par.w) < 1e-8), f'{self.par.w}'    
     
     def _setup_grid(self):
-        self.par.grid_xhat = linspace_kink(x_min=1e-6,x_max=self.par.xhat,n=self.par.num_xhat, x_int=1) # create a grid with more points below 1
+        self.par.grid_xhat = linspace_kink(x_min=self.par.xmin+1e-6,x_max=self.par.xhat,n=self.par.num_xhat, x_int=1) # create a grid with more points below 1
 
     def _setup_income_shifter(self,):
         # create a grid of different ages
