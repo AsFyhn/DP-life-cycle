@@ -2,7 +2,7 @@ import numpy as np
 from scipy import interpolate
 
 class Simulator:
-    def __init__(self,par,sol,simN=10000):
+    def __init__(self,par,sol,simN=100_000):
         self.par = par
         self.simN = simN
         self.sol = sol
@@ -60,10 +60,10 @@ class Simulator:
         self.sim.Y_avg = np.empty(self.par.Tr_N)
         self.sim.P = np.empty(self.shape)
         self.sim.S = np.empty(self.shape)
-        
         self.sim.age = np.empty(self.shape)
 
         self.sim.init_P = self.par.init_P*np.ones(self.sim.simN) 
+
         # d. call
         for t in range(self.par.Tr_N):
             self.simulate_name_change(t,self.sim.trans[t,:],self.sim.perm[t,:],self.sim.uni[t,:])
@@ -89,14 +89,12 @@ class Simulator:
         m_sol[1:self.par.num_xhat+1] = self.sol.m[:,t]
 
         c = self.sim.c[t,:]
-        # a. shocks variance 
+        # a. shocks variables 
         sigma_perm = self.par.sigma_eta
         sigma_trans = self.par.sigma_mu
 
         perm_shock = np.exp(sigma_perm*perm) # log-normal distribution with variance sigma_perm 
-        trans_shock = np.exp(sigma_trans*trans)*(uni>self.par.pi) + 0*(uni<=self.par.pi)
-        
-        # par.init_P, par.mu_a_init, par.sigma_a_init*sim.init_a
+        trans_shock = np.exp(sigma_trans*trans)*(uni>self.par.pi) + 0*(uni<=self.par.pi) # log-normal distribution with variance 
 
         if t==0:
             self.sim.P[t,:] = self.sim.init_P*perm_shock
@@ -104,12 +102,12 @@ class Simulator:
             self.sim.m[t,:] = initW + trans_shock 
     
         else:
-            self.sim.P[t] = self.par.G[t-1]*self.sim.P[t-1]*perm_shock
+            self.sim.P[t] = self.sim.P[t-1]*self.par.G[t-1]*perm_shock
             fac = self.par.G[t-1]*perm_shock
             self.sim.m[t] = self.par.R*self.sim.a[t-1]/fac + trans_shock 
 
         # Income 
-        self.sim.Y[t] =self.sim.P[t]*trans_shock
+        self.sim.Y[t] = self.sim.P[t]*trans_shock
 
         # interpolate optimal consumption
         interp = interpolate.interp1d(m_sol,c_sol, bounds_error=False, fill_value = "extrapolate")
