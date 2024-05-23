@@ -48,7 +48,7 @@ class PlotFigure:
         if axis == 'y2':
             if not hasattr(self, 'ax_sec'):
                 self.add_secondary_yaxis()
-                self.ax_sec.set_prop_cycle('color', self.ax._get_lines.prop_cycler)
+                self.ax_sec.set_prop_cycle('color', self.ax._get_lines.prop_cycler.__next__()['color'])
                 obj = self.ax_sec
         else: 
             obj = self.ax
@@ -107,7 +107,14 @@ class PlotFigure:
 
     def add_legend(self):
         """Add a legend to the figure."""
-        self.ax.legend()
+        # create one common legend for all plots on both axes
+        handles, labels = self.ax.get_legend_handles_labels()
+        if hasattr(self, 'ax_sec'):
+            handles_sec, labels_sec = self.ax_sec.get_legend_handles_labels()
+            handles += handles_sec
+            labels += labels_sec
+        self.ax.legend(handles, labels,)
+        
     def set_number_format(self, axis, format_string='{x:.2f}'):
         """
         Set number format for ticks on the specified axis.
