@@ -10,7 +10,7 @@ class SMD:
         self.age_groups = False # default is False
 
     def mom_fun(self,data):
-        return (data.C_avg)
+        return np.log(data.C_avg)
     
     def obj_function(self,theta,est_par,W):
         # a. update parameters 
@@ -26,14 +26,15 @@ class SMD:
         # self.simulator.draw_random(self.solver.par, sim)
         # self.sim = self.simulator.simulate(sim, self.solver.par, sol)
         
-        self.sim = self.simulator(par=self.solver.par,sol=sol,simN=10000).sim
+        sim_Object = self.simulator(par=self.solver.par,sol=sol)
+        sim = sim_Object.main() 
 
         if self.age_groups:
             self.mom_sim = np.empty(4) + np.nan
             for j, i in enumerate(range(0,len(self.sim.C_avg),10)):
                 self.mom_sim[j] = self.sim.C_avg[i:i+10].mean()
         else:
-            self.mom_sim = self.mom_fun(self.sim)
+            self.mom_sim = self.mom_fun(sim)
 
         # d. calculate objective function and return it
         self.diff = self.mom_data - self.mom_sim
