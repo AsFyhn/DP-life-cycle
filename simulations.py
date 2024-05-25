@@ -2,17 +2,19 @@ import numpy as np
 from scipy import interpolate
 
 class Simulator:
-    def __init__(self,par,sol,simN=100_000):
+    def __init__(self,par,sol,simN=10_000):
         self.par = par
         self.simN = simN
         self.sol = sol
-        self.main()
+        # self.main()
         # return self.sol
         
     def main(self):
         self.sim_setup()
         self.draw_random()
-        self.simulate()
+        C_avg = self.simulate()
+        return C_avg
+
     def sim_setup(self,):
         """
         Simulate the data for the model
@@ -52,6 +54,7 @@ class Simulator:
         self.sim.c = np.empty(self.shape)
         self.sim.C = np.empty(self.shape)
         self.sim.C_avg = np.empty(self.par.Tr_N)
+        self.sim.C_var = np.empty(self.par.Tr_N)
         self.sim.a = np.empty(self.shape)
         self.sim.A = np.empty(self.shape)
         self.sim.m = np.empty(self.shape)
@@ -69,14 +72,18 @@ class Simulator:
             self.simulate_name_change(t,self.sim.trans[t,:],self.sim.perm[t,:],self.sim.uni[t,:])
             
             # avg consumption without zero-shocks
-            I = self.sim.Y[t]>0
-            self.sim.C_avg[t] = np.exp(np.mean(np.log(self.sim.C[t,I])))
+            I = self.sim.Y[t]>-100
+
+            self.sim.C_avg[t] = np.exp(np.mean(np.log(self.sim.C[t,I]))) # use to be exp(mean(log(C))) ???
+            self.sim.C_var[t] = np.var(self.sim.C[t,I])
             self.sim.Y_avg[t] = (np.mean(self.sim.Y[t]))
 
             # # end-of-period wealth and saving
             # self.sim.a[t] = self.sim.m[t] - self.sim.C[t]
             # if t>0:
             #     self.sim.S[t] = (self.sim.a[t]*self.sim.P[t] - self.sim.a[t-1]*self.sim.P[t-1]) # do not divide with R because I use A and not W
+        
+        return self.sim
 
 
         
@@ -94,11 +101,11 @@ class Simulator:
         sigma_trans = self.par.sigma_mu
 
         perm_shock = np.exp(sigma_perm*perm) # log-normal distribution with variance sigma_perm 
-        trans_shock = np.exp(sigma_trans*trans)*(uni>self.par.pi) + 0*(uni<=self.par.pi) # log-normal distribution with variance 
+        trans_shock = np.exp(sigma_trans*trans)*(uni>self.par.pi) + 0*(uni<=self.par.pi) # log-normal distribution with variance -- notice that the very last 
 
         if t==0:
             self.sim.P[t,:] = self.sim.init_P*perm_shock
-            initW = 0 #par.mu_a_init*np.exp(par.sigma_a_init*sim.init_a) 
+            initW = 0.061 #par.mu_a_init*np.exp(par.sigma_a_init*sim.init_a) 
             self.sim.m[t,:] = initW + trans_shock 
     
         else:
@@ -112,7 +119,7 @@ class Simulator:
         # interpolate optimal consumption
         interp = interpolate.interp1d(m_sol,c_sol, bounds_error=False, fill_value = "extrapolate")
         c = interp(self.sim.m[t,:])
-        self.sim.C[t,:] = c*self.sim.P[t,:]
+        self.sim.C[t,:] = c * self.sim.P[t,:]
         self.sim.M[t,:] = self.sim.m[t,:]*self.sim.P[t,:]
         
 
