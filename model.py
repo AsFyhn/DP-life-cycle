@@ -25,6 +25,9 @@ class gp_model:
     def set_parameters(self,**kwargs):
         # a) utility and consumption parameters
         self.par.beta = 0.96 # discount factor
+        self.par.beta2 = 0.96
+        self.par.betas = np.array([self.par.beta,self.par.beta2]) # discount factor
+        self.par.share = 1
         self.par.R = 1.034 # interest rate
         self.par.rho = 0.514 # risk aversion parameter in the utility function
         self.par.gamma1 = 0.071 # mpc for retiress. maybe 
@@ -52,7 +55,7 @@ class gp_model:
         for key, value in kwargs.items():
             setattr(self.par, key, value)
     
-        self.par.dim = [self.par.num_xhat,self.par.Tr_N+1] # Dimension of value function space
+        self.par.dim = [self.par.num_xhat,self.par.Tr_N+1,2] # Dimension of value function space
 
     def _setup_shocks(self):
         self.par.eta, self.par.eta_w, self.par.mu, self.par.mu_w, self.par.Nshocks = create_shocks(
@@ -72,7 +75,7 @@ class gp_model:
     
     def _setup_grid(self):
         self.par.grid_xhat = linspace_kink(x_min=self.par.xmin+1e-6,x_max=self.par.xhat,n=self.par.num_xhat, x_int=1) # create a grid with more points below 1
-
+        self.par.grid_xhat = self.par.grid_xhat.reshape((self.par.num_xhat,1))
     def _setup_income_shifter(self,):
         # a) define income data
         age_groups = [29.8, 39.5, 49.5, 59.6, 69.3]
