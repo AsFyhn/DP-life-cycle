@@ -126,8 +126,14 @@ class PlotFigure:
         """
         if axis == 'x':
             self.ax.xaxis.set_major_formatter(ticker.StrMethodFormatter(format_string))
-        elif axis == 'y':
-            self.ax.yaxis.set_major_formatter(ticker.StrMethodFormatter(format_string))
+        elif axis[:1] == 'y':
+            if axis == 'y2':
+                if hasattr(self, 'ax_sec'):
+                    self.ax_sec.yaxis.set_major_formatter(ticker.StrMethodFormatter(format_string))
+                else:
+                    print("Secondary y-axis not added. Please add a secondary y-axis before setting the number format.")
+            else:
+                self.ax.yaxis.set_major_formatter(ticker.StrMethodFormatter(format_string))
         else:
             print("Invalid axis. Please specify 'x' or 'y'.")
     def add_gridlines(self, axis='both', color='gray'):
