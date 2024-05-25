@@ -76,7 +76,8 @@ class gp_model:
     def _setup_income_shifter(self,):
         # a) define income data
         age_groups = [29.8, 39.5, 49.5, 59.6, 69.3]
-        income = [89514, 118149, 128980, 105498, 68059] #income is before tax! consider using after tax income
+        income = [80_911, 103_476, 110_254, 90_334, 63_187]# after tax income 
+        #[89514, 118149, 128980, 105498, 68059] #income before tax
         consumption = [67883, 86049, 91074, 78079, 60844]
         # create dictionary        
         self.income_data = {age:income for age,income in zip(age_groups,income)}
@@ -89,12 +90,12 @@ class gp_model:
 
         self.grid_age = np.array([float(age) for age in range(self.par.t0,self.par.Tr+1)])  # create a grid of different ages
 
-        self.Ybar=np.polyval(polY,self.grid_age) # interpolate
-        self.Ybar = np.log(self.Ybar)
-        self.Cbar=np.log(np.polyval(polC,self.grid_age))
+        Ybar=np.polyval(polY,self.grid_age) # interpolate
+        self.Ybar = Ybar #np.log(Ybar)
+        self.Cbar= np.log(np.polyval(polC,self.grid_age))
 
         # create growth rate in income
-        self.par.G = self.Ybar[1:(self.par.Tr_N+1)]/self.Ybar[0:self.par.Tr_N] # growth rate is shiftet forward
+        self.par.G = Ybar[1:(self.par.Tr_N+1)]/Ybar[0:self.par.Tr_N] # growth rate is shiftet forward
 
         # c) set simulation parameters
         self.par.init_P = self.Ybar[0]
