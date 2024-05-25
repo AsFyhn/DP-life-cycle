@@ -49,7 +49,8 @@ class PlotFigure:
             if not hasattr(self, 'ax_sec'):
                 self.add_secondary_yaxis()
                 self.ax_sec.set_prop_cycle('color', self.ax._get_lines.prop_cycler.__next__()['color'])
-                obj = self.ax_sec
+            obj = self.ax_sec
+
         else: 
             obj = self.ax
         if marker == 'o':
