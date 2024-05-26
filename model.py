@@ -153,9 +153,6 @@ def solve_bf_retirement(t, par, sol):
     if par.betas[0] == par.betas[1]:
         if not np.allclose(sol.c[:,t,0],sol.c[:,t,1]):
             raise ValueError('The consumption in the two states are not equal')
-    else:
-        if np.allclose(sol.c[:,t,0],sol.c[:,t,1]):
-            raise ValueError('The consumption in the two states are equal') 
     return sol
 
 def solve_egm(t, par, sol):

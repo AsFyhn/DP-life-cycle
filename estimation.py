@@ -62,7 +62,7 @@ class SMD:
 
         return self.obj
 
-    def estimate(self,theta0,est_par,bounds=None,W=None, grid=False):
+    def estimate(self,theta0,est_par,bounds=None,W=None,constraint=None, grid=False):
         """
         Estimate the model parameters using the simulated method of moments
             Args:
@@ -91,8 +91,17 @@ class SMD:
         # c. estimate parameters
         if not grid:
             # i. estimate parameters by minimizing the objective function
+            if constraint is None:
+                constraints = None
+                optimizer_method = 'nelder-mead'
+            else:
+                constraints = ({'type': 'ineq', 'fun': constraint})
+                optimizer_method = 'SLSQP' # nelder-mead does not support constraints
+            print('used optimizer: ', optimizer_method)
             self.est_out = minimize(self.obj_function, theta0, (est_par,W,), bounds=bounds,
-                                    method='nelder-mead',options={'disp': False}, )
+                                    method=optimizer_method,options={'disp': False}, 
+                                    constraints=constraints
+                                    )
             x_opt = self.est_out.x
         else:
             # ii. estimate parameters by minimizing the objective function
