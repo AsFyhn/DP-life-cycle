@@ -2,45 +2,65 @@ from scipy.optimize import minimize
 import numpy as np
 
 class SMD:
-    def __init__(self, model, solver, simulator,mom_data):
+    def __init__(self, model, simulator, mom_data):
+        """
+        Initialize the Estimation class.
+
+        Args:
+            model: The model object used for estimation.
+            simulator: The simulator object used for estimation.
+            mom_data: The moment data used for estimation.
+
+        Attributes:
+            model: The model object used for estimation.
+            simulator: The simulator object used for estimation.
+            mom_data: The moment data used for estimation.
+            age_groups: A boolean indicating whether age groups are used. Default is False.
+        """
         self.model = model
-        self.mom_data = mom_data
-        self.solver = solver(model)
         self.simulator = simulator
-        self.age_groups = False # default is False
+        self.mom_data = mom_data
+        self.age_groups = False  # default is False
 
     def mom_fun(self,data):
         return np.log(data.C_avg)
     
-    def obj_function(self,theta,est_par,W):
+    def obj_function(self, theta, est_par, W):
+        """
+        Calculate the objective function value based on the given parameters.
+
+        Parameters:
+        - theta (list): List of parameter values.
+        - est_par (list): List of parameter names to be updated.
+        - W (numpy.ndarray): Weight matrix.
+
+        Returns:
+        - obj (float): Objective function value.
+        """
+
         # a. update parameters 
         for i in range(len(est_par)):
-            setattr(self.solver.par,est_par[i],theta[i]) # like par.key = val
+            setattr(self.model.par, est_par[i], theta[i]) # like par.key = val
 
         # b. solve model with current parameters
-        self.solver.solve() # consider adding the solve method to the class beforehand
-        sol = self.solver.sol
+        self.model.solve_model() # consider adding the solve method to the class beforehand
 
         # c. simulate data from the model and calculate moments [have this as a complete function, used for standard errors]
-        # sim = self.simulator.sim_setup(self.solver.par)
-        # self.simulator.draw_random(self.solver.par, sim)
-        # self.sim = self.simulator.simulate(sim, self.solver.par, sol)
-        
-        sim_Object = self.simulator(par=self.solver.par,sol=sol)
+        sim_Object = self.simulator(par=self.model.par, sol=self.model.sol)
         sim = sim_Object.main() 
 
         if self.age_groups:
             self.mom_sim = np.empty(4) + np.nan
-            for j, i in enumerate(range(0,len(self.sim.C_avg),10)):
+            for j, i in enumerate(range(0, len(self.sim.C_avg), 10)):
                 self.mom_sim[j] = self.sim.C_avg[i:i+10].mean()
         else:
             self.mom_sim = self.mom_fun(sim)
 
         # d. calculate objective function and return it
         self.diff = self.mom_data - self.mom_sim
-        self.obj  = (np.transpose(self.diff) @ W) @ self.diff
+        self.obj = (np.transpose(self.diff) @ W) @ self.diff
 
-        return self.obj 
+        return self.obj
 
     def estimate(self,theta0,est_par,bounds=None,W=None, grid=False):
         """
@@ -63,7 +83,7 @@ class SMD:
             W = np.eye(len(self.mom_data))
 
         # a. store initial parameters
-        thetainit = [getattr(self.model,est_par[i]) for i in range(len(est_par))]
+        thetainit = [getattr(self.model.par,est_par[i]) for i in range(len(est_par))]
 
         # b. Check dimensions of weight matrix and data
         assert(len(W[0])==len(self.mom_data)) 
@@ -79,6 +99,7 @@ class SMD:
             if not hasattr(self,'beta_grid') or not hasattr(self,'rho_grid'):
                 raise ValueError('Please provide beta_grid and rho_grid')
             self.grid = np.empty((len(self.beta_grid),len(self.rho_grid))) + np.nan
+
             for i, beta in enumerate(self.beta_grid):
                 for j, rho in enumerate(self.rho_grid):
                     self.grid[i,j] = self.obj_function([beta,rho],est_par,W)
@@ -92,7 +113,7 @@ class SMD:
 
         # d. reset the model parameters to the initial values
         for i in range(len(est_par)):
-            setattr(self.model,est_par[i],thetainit[i])
+            setattr(self.model.par,est_par[i],thetainit[i])
 
     def estimate_variance_covariance_matrix(self, theta, est_par, W=None):
         """

@@ -12,8 +12,8 @@ class Simulator:
     def main(self):
         self.sim_setup()
         self.draw_random()
-        C_avg = self.simulate()
-        return C_avg
+        sim_res = self.simulate()
+        return sim_res
 
     def sim_setup(self,):
         """
@@ -134,10 +134,16 @@ class Simulator:
             self.sim.C[t,:,consumer] = c[:,consumer] * self.sim.P[t,:,consumer]
             self.sim.M[t,:,consumer] = self.sim.m[t,:,consumer]*self.sim.P[t,:,consumer]
         
+        # used for checking that the code works as intended
         if self.par.betas[0] == self.par.betas[1]:
             if not np.allclose(self.sim.C[t,:,0], self.sim.C[t,:,1]):
-                print(self.sim.C[t,:,0], self.sim.C[t,:,1])
-                raise ValueError('C0 and C1 are not equal')
+                # check if they are all nan 
+                if np.all(np.isnan(self.sim.C[t,:,0])) and np.all(np.isnan(self.sim.C[t,:,1])):
+                    pass
+                # find where they are not equal
+                else:
+                    print(self.sim.C[t,:,0], self.sim.C[t,:,1])
+                    raise ValueError('C0 and C1 are not equal')
 
         # end-of-period wealth and saving
         self.sim.a[t,:,:] = self.sim.m[t,:,:] - c[:,:]
