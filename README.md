@@ -1,26 +1,32 @@
-# DP-life-cycle
-Used for group-work on our term paper 
+# DP-life-cycle (Term Paper)
 
+This project involves the implementation and simulation of a generalized model, using Python and various scientific libraries. The code performs tasks such as setup of the model described in section **2** in the paper, solving, simulation, estimation, and visualization of the results.
 
-Inspiration: 
-Thomas Code:
-https://github.com/ThomasHJorgensen/Sensitivity/tree/master/GP2002
+## File Structure
 
-DREAM-gruppen:
-https://dreamgroup.dk/Media/638202824872355318/MAKRO_modeling_choices.pdf
+- ``run_all.ipynb``: Jupyter notebook containing the main script to run the project.
+- ``model.py``: Defines the gp_model class and related methods to solving the model.
+- ``simulations.py``: Contains the Simulator class for simulating model data.
+- ``estimation.py``: Implements the SMD class for parameter estimation using simulated method of moments.
+- ``plotgenerator.py``: Contains helper functions for plotting.
 
-Campbell and Mankiw (1989):
-https://www.nber.org/system/files/chapters/c10965/c10965.pdf
-Notes: 
-Two types of households: 
-One that consumes as under the permanent income hypothesis and one that consumes as under the life-cycle hypothesis. 
+## Prerequisites
 
+To run the script, ensure you have the following installed:
+- Python 3.6 or higher
+- Jupyter Notebook
+- Required Python libraries: 
+    - `numpy`
+    - `scipy` 
+    - `matplotlib`
+    - `pandas`
+    - `statsmodels`
 
-Status 23/05-2024: 
+## Getting Started
 
-    Still missing:
-    - initW = 0 is a problem since m[t=0,:]=0 in pi times of the drawings
-    - Does the income process work?
-        Notice that the income is very high what is observed in the data.
-    - Do we use a log too much? Notice how we take the exponential function of C_avg before returning it?
-    - Extention of the model to include two types of consumers.
+1. Clone the repository to your local machine.
+2. Ensure all dependencies are installed.
+3. Open the ``run_all.ipynb`` file. 
+    - Might need to change the path specified in first code block
+    - Set ```python save_figs = True``` if you want to have the figures saved to your machine. Otherwise it will just show.
+4. Execute all cells to see the results.
