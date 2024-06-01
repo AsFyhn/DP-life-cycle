@@ -4,17 +4,33 @@ import numpy as np
 from scipy import stats
 
 class PlotFigure:
-    def __init__(self, figsize=(8, 6),fontname:str='Century Gothic',color_cycle=None):
-        self.fig, self.ax = plt.subplots(figsize=figsize)
+    def __init__(self, figsize=(8, 6),rows=1,cols=1,fontname:str='Times New Roman',color_cycle=None):
+        self.fig, self.axs = plt.subplots(figsize=figsize,ncols=cols,nrows=rows)
         self.plots = []
         self.fontname = fontname
-        self.ax.tick_params(axis='y')
-        color_cycle 
-        # plt.style.use('seaborn-white')
+
+        # set color cycle
         if color_cycle is None:
             color_cycle = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5', '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5']
             # color_cycle = plt.rcParams['axes.color_cycle'][2] #plt.get_cmap('Set1').colors # sns.color_palette("pastel")
-        self.ax.set_prop_cycle('color', color_cycle)
+            plt.style.use('bmh')
+            color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+            plt.style.use('seaborn-white')
+
+        if rows*cols>1:
+            for i, ax in enumerate(self.axs):
+                self.change_ax(i)
+                ax.tick_params(axis='y')
+                self.add_gridlines('y')
+                self.ax.set_prop_cycle('color', color_cycle)
+        self.change_ax(0)
+    def change_ax(self,numb):
+        # if self.axs is not a list, it is a single axis
+        if type(self.axs) is not np.ndarray:
+            self.ax = self.axs
+        else:
+            self.ax = self.axs[numb]
+
     def add_histogram(self, data, bins=10, label='',normal_distribution=False, color=None):
         """
         Add a histogram to the figure.
@@ -34,7 +50,26 @@ class PlotFigure:
             y = stats.norm.pdf(x, mean, std)
             self.plots.append(self.ax.plot(x, y, label='Normal Distribution', color='red'))
 
-    def add_plot(self, x, y, label='', linestyle='-',axis='y1', marker=None, color=None):
+    def add_bar(self, x, y, label='',axis='y1', color=None, offset=0):
+        """
+        Add a bar plot to the figure.
+        
+        Parameters:
+        - x, y: Data for the bar plot.
+        - label: Label for the bar plot.
+        - color: Color for the bar plot (default is None).
+        - offset: Offset for the x-values of the bar plot (default is 0).
+        """
+        if axis == 'y2':
+            if not hasattr(self, 'ax_sec'):
+                self.add_secondary_yaxis()
+                self.ax_sec.set_prop_cycle('color', self.ax._get_lines.prop_cycler.__next__()['color'])
+            obj = self.ax_sec
+        else:
+            obj = self.ax
+        self.plots.append(obj.bar([xi + offset for xi in x], y, label=label, color=color))
+
+    def add_plot(self, x, y, label='',xlabel=None,ylabel=None, linestyle='-',axis='y1', marker=None, color=None):
         """
         Add a plot to the figure.
         
@@ -45,19 +80,33 @@ class PlotFigure:
         - marker: Marker for the plot points (default is None).
         - color: Color for the plot (default is None).
         """
+        if xlabel is not None:
+            self.set_xlabel(xlabel)
+        if ylabel is not None:
+            self.set_ylabel(ylabel,axis=axis)
         if axis == 'y2':
             if not hasattr(self, 'ax_sec'):
                 self.add_secondary_yaxis()
                 self.ax_sec.set_prop_cycle('color', self.ax._get_lines.prop_cycler.__next__()['color'])
             obj = self.ax_sec
-
         else: 
             obj = self.ax
-        if marker == 'o':
+
+        if marker is not None:
             new_plot = obj.scatter(x, y, label=label, marker=marker, color=color)
         else:
             new_plot = obj.plot(x, y, label=label, linestyle=linestyle, marker=marker, color=color)
         self.plots.append(new_plot)
+
+    def _set_scaling2(self,axis='y1',limits=None):
+        if axis=='y2':
+            ax  = self.ax_sec
+        else: 
+            ax = self.ax
+        if limits is None:
+            limits = ax.get_ylim()
+        ax.set_ylim(limits)
+
 
     def _set_scaling(self,):
         if not hasattr(self, 'ax_sec'):
@@ -66,7 +115,7 @@ class PlotFigure:
             limits1 = self.ax.get_ylim()
             self.ax_sec.set_ylim(limits1)
 
-    def add_hline(self, y, label='', linestyle='-', color='black'):
+    def add_hline(self, y, label='', axis='y1', linestyle='-',size=1, color='black'):
         """
         Add a horizontal line to the figure.
         
@@ -75,8 +124,13 @@ class PlotFigure:
         - label: Label for the line.
         - linestyle: Line style for the line (default is '-').
         - color: Color for the line (default is 'black').
+        - size: Line width
         """
-        self.plots.append(self.ax.axhline(y=y, label=label, linestyle=linestyle, color=color))
+        if axis == 'y2':
+            ax = self.ax_sec
+        else:
+            ax = self.ax
+        self.plots.append(ax.axhline(y=y, label=label, linestyle=linestyle, color=color,linewidth=size))
     def add_vline(self, x, label='', linestyle='-', color='black'):
         """
         Add a vertical line to the figure.
@@ -177,4 +231,4 @@ class PlotFigure:
         - dpi: Resolution in dots per inch (default is 300).
         - format: File format (default is 'png').
         """
-        self.fig.savefig(filename, dpi=dpi, format=format)
+        self.fig.savefig(filename, dpi=dpi, format=format, bbox_inches='tight')

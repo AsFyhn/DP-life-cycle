@@ -29,7 +29,7 @@ class gp_model:
         # a) utility and consumption parameters
         self.par.beta = self.par.beta2 = 0.96 # discount factor
         self.par.share = 1
-        self.par.R = 1.034 # interest rate
+        self.par.r = 0.034
         self.par.rho = 0.514 # risk aversion parameter in the utility function
         self.par.gamma1 = 0.071 # mpc for retiress. maybe 
         self.par.pi = 0.00302 # probability of income shock 
@@ -143,10 +143,10 @@ class gp_model:
 
 def solve_bf_retirement(t, par, sol):
 
-    c_plus = (par.gamma1*par.R*(par.grid_xhat-par.xmin))/par.G[t] # par.xmin is 0 in GP but not in LC
+    c_plus = (par.gamma1*(1+par.r)*(par.grid_xhat-par.xmin))/par.G[t] # par.xmin is 0 in GP but not in LC
     
     dU = marg_util(par.G[t]*c_plus,par)
-    sol.c[:,t] = inv_marg_util(par.betas*par.R*dU,par)
+    sol.c[:,t] = inv_marg_util(par.betas*(1+par.r)*dU,par)
     sol.m[:,t] = par.grid_xhat + sol.c[:,t]    
 
     # check if consumption is equal in the two states
@@ -170,7 +170,7 @@ def solve_egm(t, par, sol):
     for i in range(par.Nshocks):
         # next-period resources
         fac = par.G[t]*par.eta[i]
-        m_plus = (par.R/fac)*par.grid_xhat + par.mu[i]
+        m_plus = ((1+par.r)/fac)*par.grid_xhat + par.mu[i]
 
         # interpolate next-period consumption
         for consumer in range(m_next.shape[1]):
@@ -182,7 +182,7 @@ def solve_egm(t, par, sol):
         w = par.w[i]
         Eu += w*marg_util(fac*c_plus,par) 
     # invert Euler equation
-    sol.c[:,t] = inv_marg_util(par.betas*par.R*Eu,par) 
+    sol.c[:,t] = inv_marg_util(par.betas*(1+par.r)*Eu,par) 
     sol.m[:,t] = par.grid_xhat + sol.c[:,t]
     return sol
 

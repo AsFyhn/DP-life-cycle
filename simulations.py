@@ -96,8 +96,6 @@ class Simulator:
         
         return self.sim
 
-
-        
     def simulate_name_change(self,t,trans,perm,uni):
         """Change the name of the function later"""
         c_sol = np.zeros((self.par.num_xhat+1,2))
@@ -122,7 +120,7 @@ class Simulator:
         else:
             self.sim.P[t] = self.sim.P[t-1]*self.par.G[t-1]*perm_shock
             fac = self.par.G[t-1]*perm_shock
-            self.sim.m[t] = self.par.R*self.sim.a[t-1]/fac + trans_shock 
+            self.sim.m[t] = (1+self.par.r)*self.sim.a[t-1]/fac + trans_shock 
 
         # Income 
         self.sim.Y[t] = self.sim.P[t]*trans_shock
@@ -150,4 +148,3 @@ class Simulator:
 
         if t>0:
             self.sim.S[t] = (self.sim.a[t]*self.sim.P[t] - self.sim.a[t-1]*self.sim.P[t-1]) # do not divide with R because I use A and not W
-

@@ -1,4 +1,5 @@
 from scipy.optimize import minimize
+from scipy import interpolate
 import numpy as np
 
 class SMD:
@@ -39,6 +40,8 @@ class SMD:
         """
 
         # a. update parameters 
+        orig_params = [getattr(self.model.par, est_par[i]) for i in range(len(est_par))]
+
         for i in range(len(est_par)):
             setattr(self.model.par, est_par[i], theta[i]) # like par.key = val
 
@@ -60,6 +63,9 @@ class SMD:
         self.diff = self.mom_data - self.mom_sim
         self.obj = (np.transpose(self.diff) @ W) @ self.diff
 
+        # e. reset parameters
+        for i in range(len(est_par)):
+            setattr(self.model.par, est_par[i], orig_params[i])
         return self.obj
 
     def estimate(self,theta0,est_par,bounds=None,W=None,constraint=None, grid=False):
@@ -155,3 +161,82 @@ class SMD:
         var_cov_matrix = np.linalg.inv(grad_moments.T @ W @ grad_moments)
 
         return var_cov_matrix
+
+    def sensitivity(self, theta, est_par, W, phi_st, step=1.0e-7):
+        """
+        Calculate sensitivity measures for the moment function.
+
+        Parameters:
+        - theta (array-like): The parameter values for which to calculate sensitivity measures.
+        - est_par (array-like): The estimated parameter values.
+        - W (array-like): The weight matrix.
+        - phi_st (array-like): The names of the fixed parameters.
+        - step (float, optional): The step size for numerical differentiation. Default is 1.0e-7.
+
+        Returns:
+        - S_elasticity (ndarray): The sensitivity measures.
+
+        """
+        # 1. numerical gradient of moment function wrt theta. 
+        grad = self.num_grad_moms(est_par,theta, W, step=step)
+
+        # 2. calculate key components
+        GW = np.transpose(grad) @ W
+        GWG = GW @ grad
+        Psi = - np.linalg.solve(GWG, GW)
+
+        # 3. calculate sensitivity measures
+        # construct vector of fixed values
+        phi = np.array([getattr(self.model.par, name) for name in phi_st])
+
+        # calculate gradient of the moment function with respect to gamma
+        Lambda = self.num_grad_moms(phi, phi_st, W, step=step)
+        
+        self.sens = Psi @ Lambda
+
+        S_elasticity = np.empty((len(theta), len(phi)))
+        for t in range(len(theta)):
+            for g in range(len(phi)):
+                # print(f'{theta[t]}, {phi_st[g]}',self.sens[t,g], phi[g]/est_par[t])
+                S_elasticity[t, g] = self.sens[t, g] * phi[g] / est_par[t]    
+
+        return S_elasticity
+
+    def num_grad_moms(self,params,names,W,step=1.0e-4):
+        """ 
+        Returns the numerical gradient of the moment vector
+        Inputs:
+            params (1d array): K-element vector of parameters
+            W (2d array): J x J weighting matrix
+            step (float): step size in finite difference
+            *args: additional objective function arguments
+        
+        Output:
+            grad (2d array): J x K gradient of the moment function wrt to the elements in params
+        """
+        num_par = len(params)
+        num_mom = len(W[0])
+
+        # a. numerical gradient. The objective function is (data - sim)'*W*(data - sim) so take the negative of mom_sim
+        grad = np.empty((num_mom,num_par))
+        for p in range(num_par):
+            params_now = params.copy()
+
+            step_now  = np.zeros(num_par)
+            step_now[p] = step #np.fmax(step,np.abs(step*params_now[p]))
+
+            self.obj_function(params_now + step_now,names,W,)
+            mom_forward = self.diff.copy()
+
+            self.obj_function(params_now - step_now,names,W,)
+            mom_backward = self.diff.copy()
+
+            grad[:,p] = (mom_forward - mom_backward)/(2.0*step_now[p])
+
+        # b. reset the parameters in the model to params
+        for i in range(len(names)):
+            setattr(self.model.par,names[i],params[i]) 
+        
+        # c. return gradient
+        return grad
+
