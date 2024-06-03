@@ -28,10 +28,10 @@ class gp_model:
     def set_parameters(self,**kwargs):
         # a) utility and consumption parameters
         self.par.beta = self.par.beta2 = 0.96 # discount factor
-        self.par.share = 1
-        self.par.r = 0.034
+        self.par.share = 1  # share of the population that is patient
+        self.par.r = 0.034 # input is net interest rate 
         self.par.rho = 0.514 # risk aversion parameter in the utility function
-        self.par.gamma1 = 0.071 # mpc for retiress. maybe 
+        self.par.gamma1 = 0.071 # mpc for retiress. 
         self.par.pi = 0.00302 # probability of income shock 
         
         # b) life cycle
@@ -85,6 +85,7 @@ class gp_model:
     def _setup_grid(self):
         self.par.grid_xhat = linspace_kink(x_min=self.par.xmin+1e-6,x_max=self.par.xhat,n=self.par.num_xhat, x_int=1) # create a grid with more points below 1
         self.par.grid_xhat = self.par.grid_xhat.reshape((self.par.num_xhat,1))
+
     def _setup_income_shifter(self,):
         # a) define income data
         age_groups = [29.8, 39.5, 49.5, 59.6, 69.3]
@@ -94,7 +95,6 @@ class gp_model:
         # create dictionary        
         self.income_data = {age:income for age,income in zip(age_groups,income)}
         self.consumption_data = {age:consumption for age,consumption in zip(age_groups,consumption)}
-
 
         # b) permanent income growth
         polY = np.polyfit(age_groups, income, 4) # create a polynomial of 4th degree

@@ -1,7 +1,5 @@
 from scipy.optimize import minimize
-from scipy import interpolate
 import numpy as np
-
 class SMD:
     def __init__(self, model, simulator, mom_data):
         """

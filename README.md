@@ -19,8 +19,8 @@ To run the script, ensure you have the following installed:
     - `numpy`
     - `scipy` 
     - `matplotlib`
-    - `pandas`
-    - `statsmodels`
+    - `plotly`
+
 
 ## Getting Started
 
