@@ -122,7 +122,7 @@ class gp_model:
     
         # allocate memory
         self.sol.c = np.empty(self.par.dim )
-        self.sol.m = np.empty(self.par.dim )
+        self.sol.x = np.empty(self.par.dim )
     
         # b. backwards induction
         for t in reversed(range(self.par.Tr_N)):
@@ -147,7 +147,7 @@ def solve_bf_retirement(t, par, sol):
     
     dU = marg_util(par.G[t]*c_plus,par)
     sol.c[:,t] = inv_marg_util(par.betas*(1+par.r)*dU,par)
-    sol.m[:,t] = par.grid_xhat + sol.c[:,t]    
+    sol.x[:,t] = par.grid_xhat + sol.c[:,t]    
 
     # check if consumption is equal in the two states
     if par.betas[0] == par.betas[1]:
@@ -158,24 +158,24 @@ def solve_bf_retirement(t, par, sol):
 def solve_egm(t, par, sol):
     # a. initialize
     c_next = np.zeros((par.num_xhat+1,2))
-    m_next = np.zeros((par.num_xhat+1,2)) + par.xmin
+    x_next = np.zeros((par.num_xhat+1,2)) + par.xmin
     c_next[1:par.num_xhat+1,:] = sol.c[:,t+1,:]
-    m_next[1:par.num_xhat+1,:] = sol.m[:,t+1,:]
+    x_next[1:par.num_xhat+1,:] = sol.x[:,t+1,:]
 
     c_plus = np.empty((par.num_xhat,2))
-    m_plus = np.empty((par.num_xhat,2))
+    x_plus = np.empty((par.num_xhat,2))
 
     # loop over shocks
     Eu = np.zeros((par.num_xhat,2))
     for i in range(par.Nshocks):
         # next-period resources
         fac = par.G[t]*par.eta[i]
-        m_plus = ((1+par.r)/fac)*par.grid_xhat + par.mu[i]
+        x_plus = ((1+par.r)/fac)*par.grid_xhat + par.mu[i]
 
         # interpolate next-period consumption
-        for consumer in range(m_next.shape[1]):
-            interp = interpolate.interp1d(m_next[:,consumer],c_next[:,consumer], bounds_error=False, fill_value = "extrapolate")
-            c_plus[:,consumer] = interp(m_plus[:,0]) # the slicing of m_plus is to make it a 1D array
+        for consumer in range(x_next.shape[1]):
+            interp = interpolate.interp1d(x_next[:,consumer],c_next[:,consumer], bounds_error=False, fill_value = "extrapolate")
+            c_plus[:,consumer] = interp(x_plus[:,0]) # the slicing of m_plus is to make it a 1D array
             c_plus[:,consumer] = np.fmax(1.0e-10 , c_plus[:,consumer] ) # consumption must be non-negative
         # expected marginal utility
         # w = par.mu_w[i]*par.eta_w[i]
@@ -183,7 +183,7 @@ def solve_egm(t, par, sol):
         Eu += w*marg_util(fac*c_plus,par) 
     # invert Euler equation
     sol.c[:,t] = inv_marg_util(par.betas*(1+par.r)*Eu,par) 
-    sol.m[:,t] = par.grid_xhat + sol.c[:,t]
+    sol.x[:,t] = par.grid_xhat + sol.c[:,t]
     return sol
 
 

@@ -177,7 +177,7 @@ class SMD:
         """
         # 1. numerical gradient of moment function wrt theta. 
         grad = self.num_grad_moms(est_par,theta, W, step=step)
-
+        
         # 2. calculate key components
         GW = np.transpose(grad) @ W
         GWG = GW @ grad

@@ -95,7 +95,7 @@ class Simulator:
             self.do_simulation(t,self.sim.trans[t,:],self.sim.perm[t,:],self.sim.uni[t,:])
             
             # avg consumption without zero-shocks
-            I = self.sim.Y[t,:,0]>-100 # both consumers have same income proces so we only need to check one of them
+            I = self.sim.Y[t,:,0]>0 # both consumers have same income proces so we only need to check one of them
             
             avg_C_both = np.sum(self.sim.C[t,I] * np.array([self.par.share,1-self.par.share]),axis=1)
             
@@ -104,11 +104,6 @@ class Simulator:
             self.sim.C_avg[t] = np.mean(avg_C_both)
             self.sim.C_var[t] = np.var(avg_C_both)
             self.sim.Y_avg[t] = (np.mean(self.sim.Y[t,I]))
-
-            # # end-of-period wealth and saving
-            # self.sim.a[t] = self.sim.x[t] - self.sim.C[t]
-            # if t>0:
-            #     self.sim.S[t] = (self.sim.a[t]*self.sim.P[t] - self.sim.a[t-1]*self.sim.P[t-1]) # do not divide with R because I use A and not W
         
         return self.sim
 
@@ -125,11 +120,11 @@ class Simulator:
 
         # a. allocate
         c_sol = np.zeros((self.par.num_xhat+1,2))
-        m_sol = np.zeros((self.par.num_xhat+1,2)) + self.par.xmin
+        x_sol = np.zeros((self.par.num_xhat+1,2)) + self.par.xmin
         
         # next period consumption and cash-on-hand
         c_sol[1:self.par.num_xhat+1] = self.sol.c[:,t]
-        m_sol[1:self.par.num_xhat+1] = self.sol.m[:,t]
+        x_sol[1:self.par.num_xhat+1] = self.sol.x[:,t]
 
         c = self.sim.c[t,:]
         
@@ -156,8 +151,8 @@ class Simulator:
         self.sim.Y[t] = self.sim.P[t]*trans_shock
 
         # interpolate optimal consumption for each consumer
-        for consumer in range(m_sol.shape[1]):
-            interp = interpolate.interp1d(m_sol[:,consumer],c_sol[:,consumer], bounds_error=False, fill_value = "extrapolate")
+        for consumer in range(x_sol.shape[1]):
+            interp = interpolate.interp1d(x_sol[:,consumer],c_sol[:,consumer], bounds_error=False, fill_value = "extrapolate")
             c[:,consumer] = interp(self.sim.x[t,:,consumer])
             self.sim.C[t,:,consumer] = c[:,consumer] * self.sim.P[t,:,consumer]
             self.sim.X[t,:,consumer] = self.sim.x[t,:,consumer]*self.sim.P[t,:,consumer]
